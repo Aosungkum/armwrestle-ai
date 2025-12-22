@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArmWrestle AI - Match Analysis & Injury Risk Detection</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1>💪 ArmWrestle AI</h1>
+            </div>
+            <div class="nav-links">
+                <a href="#features">Features</a>
+                <a href="#upload">Analyze</a>
+                <a href="#pricing">Pricing</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1 class="hero-title">AI-Powered Arm Wrestling Analysis</h1>
+                <p class="hero-subtitle">Upload your match video and get instant technique breakdown, injury risk assessment, and personalized training recommendations</p>
+                <a href="#upload" class="cta-button">Analyze Your Match</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="container">
+            <h2 class="section-title">What We Analyze</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🎯</div>
+                    <h3>Technique Recognition</h3>
+                    <p>Detect top roll, hook, press, and king's move with transition analysis</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚠️</div>
+                    <h3>Injury Risk Detection</h3>
+                    <p>Identify elbow flare, shoulder stress, wrist collapse, and spine twist risks</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Strength vs Technique</h3>
+                    <p>Understand where you lost - was it strength or technique?</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔄</div>
+                    <h3>Frame Analysis</h3>
+                    <p>Slow-motion breakdown with force direction and joint angles</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💡</div>
+                    <h3>Training Recommendations</h3>
+                    <p>Get personalized exercises based on your weaknesses</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📈</div>
+                    <h3>Fatigue Tracking</h3>
+                    <p>Analyze power drop and endurance throughout the match</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Upload Section -->
+    <section id="upload" class="upload-section">
+        <div class="container">
+            <h2 class="section-title">Analyze Your Match</h2>
+            <div class="upload-container">
+                <div class="upload-area" id="uploadArea">
+                    <input type="file" id="videoInput" accept="video/*" hidden>
+                    <div class="upload-content">
+                        <div class="upload-icon">📹</div>
+                        <p class="upload-text">Drop your video here or click to browse</p>
+                        <p class="upload-hint">Supports MP4, MOV, AVI (Max 100MB)</p>
+                    </div>
+                </div>
+                
+                <div id="videoPreview" class="video-preview hidden">
+                    <video id="previewVideo" controls></video>
+                    <button id="analyzeBtn" class="analyze-button">Analyze Video</button>
+                </div>
+
+                <div id="loadingState" class="loading-state hidden">
+                    <div class="spinner"></div>
+                    <p>Analyzing your match...</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                </div>
+
+                <div id="resultsSection" class="results-section hidden">
+                    <h3>Analysis Results</h3>
+                    
+                    <!-- Technique Detection -->
+                    <div class="result-card">
+                        <h4>🎯 Technique Detected</h4>
+                        <div id="techniqueResults"></div>
+                    </div>
+
+                    <!-- Injury Risks -->
+                    <div class="result-card">
+                        <h4>⚠️ Injury Risk Assessment</h4>
+                        <div id="injuryResults"></div>
+                    </div>
+
+                    <!-- Strength Analysis -->
+                    <div class="result-card">
+                        <h4>💪 Strength vs Technique</h4>
+                        <div id="strengthResults"></div>
+                    </div>
+
+                    <!-- Training Recommendations -->
+                    <div class="result-card">
+                        <h4>🏋️ Training Recommendations</h4>
+                        <div id="trainingResults"></div>
+                    </div>
+
+                    <button id="newAnalysis" class="cta-button">Analyze Another Video</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="pricing">
+        <div class="container">
+            <h2 class="section-title">Pricing Plans</h2>
+            <div class="pricing-grid">
+                <div class="pricing-card">
+                    <h3>Free</h3>
+                    <div class="price">₹0<span>/month</span></div>
+                    <ul class="features-list">
+                        <li>✓ Basic technique detection</li>
+                        <li>✓ 1 video per day</li>
+                        <li>✓ Simple risk assessment</li>
+                        <li>✗ Frame-by-frame analysis</li>
+                        <li>✗ Training plans</li>
+                    </ul>
+                    <button class="pricing-button">Current Plan</button>
+                </div>
+                <div class="pricing-card featured">
+                    <div class="badge">Popular</div>
+                    <h3>Pro</h3>
+                    <div class="price">₹699<span>/month</span></div>
+                    <ul class="features-list">
+                        <li>✓ Advanced technique analysis</li>
+                        <li>✓ Unlimited videos</li>
+                        <li>✓ Detailed injury risk reports</li>
+                        <li>✓ Frame-by-frame breakdown</li>
+                        <li>✓ Personalized training plans</li>
+                        <li>✓ Fatigue detection</li>
+                    </ul>
+                    <button class="pricing-button">Upgrade Now</button>
+                </div>
+                <div class="pricing-card">
+                    <h3>Coach</h3>
+                    <div class="price">₹2,499<span>/month</span></div>
+                    <ul class="features-list">
+                        <li>✓ Everything in Pro</li>
+                        <li>✓ Team dashboard</li>
+                        <li>✓ Athlete progress tracking</li>
+                        <li>✓ Bulk video upload</li>
+                        <li>✓ White-label reports</li>
+                        <li>✓ Priority support</li>
+                    </ul>
+                    <button class="pricing-button">Contact Sales</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 ArmWrestle AI. All rights reserved.</p>
+            <div class="footer-links">
+                <a href="#">Privacy Policy</a>
+                <a href="#">Terms of Service</a>
+                <a href="#">Contact</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
