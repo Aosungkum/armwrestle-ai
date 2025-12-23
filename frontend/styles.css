@@ -1204,3 +1204,90 @@ body {
         transform: scale(1);
     }
 }
+
+/* New Analysis Sections */
+.analysis-section {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.analysis-section h3 {
+    color: var(--secondary);
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.why-lost-card {
+    padding: 1rem;
+    background: #fff3e0;
+    border-radius: 8px;
+    margin-top: 1rem;
+}
+
+.why-lost-card .primary-reason {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #d84315;
+    margin-bottom: 1rem;
+}
+
+.why-lost-card .detailed-reasons {
+    margin: 1rem 0;
+}
+
+.why-lost-card .detailed-reasons ul {
+    margin: 0.5rem 0;
+    padding-left: 1.5rem;
+}
+
+.why-lost-card .summary {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 6px;
+    font-style: italic;
+}
+
+.style-card {
+    padding: 1rem;
+    background: #e3f2fd;
+    border-radius: 8px;
+    margin-top: 1rem;
+}
+
+.style-card .style-name {
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: #1976d2;
+    margin-bottom: 0.5rem;
+}
+
+.style-card .primary-technique,
+.style-card .fighting-approach {
+    margin: 0.5rem 0;
+    font-size: 1.1rem;
+}
+
+.style-card .style-traits {
+    margin-top: 1rem;
+}
+
+.style-card .style-traits ul {
+    margin: 0.5rem 0;
+    padding-left: 1.5rem;
+}
+
+.person-info-card {
+    padding: 1rem;
+    background: #f1f8e9;
+    border-radius: 8px;
+    margin-top: 1rem;
+}
+
+.person-info-card div {
+    margin: 0.5rem 0;
+    font-size: 1.1rem;
+}
