@@ -123,11 +123,28 @@ def mock_analysis(video_name: str) -> Dict[str, Any]:
 # =========================
 # STATIC FILES (Frontend)
 # =========================
-# Get the path to frontend directory (one level up from backend)
-frontend_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend")
-if os.path.exists(frontend_path):
+# Try multiple paths to find frontend directory
+# Railway might deploy from root or backend directory
+possible_frontend_paths = [
+    os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend"),  # ../frontend
+    os.path.join(os.path.dirname(__file__), "frontend"),  # ./frontend (if copied)
+    os.path.join(os.getcwd(), "frontend"),  # Current working directory
+    "frontend",  # Relative to current dir
+]
+
+frontend_path = None
+for path in possible_frontend_paths:
+    if os.path.exists(path) and os.path.isdir(path):
+        frontend_path = path
+        print(f"[INFO] Found frontend at: {frontend_path}")
+        break
+
+if frontend_path and os.path.exists(frontend_path):
     # Mount static files (CSS, JS, images)
-    app.mount("/static", StaticFiles(directory=frontend_path), name="static")
+    try:
+        app.mount("/static", StaticFiles(directory=frontend_path), name="static")
+    except Exception as e:
+        print(f"[WARNING] Could not mount static files: {e}")
     
     # Serve frontend HTML files
     @app.get("/")
@@ -135,7 +152,7 @@ if os.path.exists(frontend_path):
         index_path = os.path.join(frontend_path, "index.html")
         if os.path.exists(index_path):
             return FileResponse(index_path)
-        return {"message": "Frontend not found", "mode": ANALYSIS_MODE}
+        return {"message": "Frontend index.html not found", "mode": ANALYSIS_MODE, "path": frontend_path}
     
     @app.get("/dashboard.html")
     async def serve_dashboard():
@@ -144,17 +161,24 @@ if os.path.exists(frontend_path):
             return FileResponse(dashboard_path)
         raise HTTPException(404, "Dashboard not found")
     
-    # Serve other frontend files
-    @app.get("/{filename}")
+    # Serve frontend JS/CSS files
+    @app.get("/{filename:path}")
     async def serve_frontend_file(filename: str):
+        # Don't serve API routes as files
+        if filename.startswith("api/"):
+            raise HTTPException(404, "API route")
+        
         file_path = os.path.join(frontend_path, filename)
         if os.path.exists(file_path) and os.path.isfile(file_path):
             return FileResponse(file_path)
-        # If file doesn't exist, try to serve index.html (for SPA routing)
-        index_path = os.path.join(frontend_path, "index.html")
-        if os.path.exists(index_path):
-            return FileResponse(index_path)
-        raise HTTPException(404, "File not found")
+        
+        # If it's an HTML-like request, try index.html (for SPA routing)
+        if not "." in filename or filename.endswith(".html"):
+            index_path = os.path.join(frontend_path, "index.html")
+            if os.path.exists(index_path):
+                return FileResponse(index_path)
+        
+        raise HTTPException(404, f"File not found: {filename}")
 else:
     # Frontend not found, serve API info
     @app.get("/")
@@ -162,7 +186,9 @@ else:
         return {
             "message": "ArmWrestle AI API",
             "mode": ANALYSIS_MODE,
-            "note": "Frontend files not found. Deploy frontend separately or ensure frontend/ directory exists."
+            "note": "Frontend files not found. Tried paths: " + str(possible_frontend_paths),
+            "cwd": os.getcwd(),
+            "backend_dir": os.path.dirname(__file__)
         }
 
 @app.get("/api/health")

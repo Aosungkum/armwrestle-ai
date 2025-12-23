@@ -17,3 +17,7 @@ backend/armwrestle.db
 
 # Uploads
 backend/uploads/
+
+# Frontend copy in backend (for Railway deployment)
+# Don't ignore - we need this for Railway
+# backend/frontend/

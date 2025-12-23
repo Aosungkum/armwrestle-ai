@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArmWrestle AI - Match Analysis & Injury Risk Detection</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1>💪 ArmWrestle AI</h1>
+            </div>
+            <div class="nav-links">
+                <a href="#features">Features</a>
+                <a href="#upload">Analyze</a>
+                <a href="#pricing">Pricing</a>
+                
+                <!-- Not Logged In -->
+                <button id="loginBtn" class="nav-login-btn" onclick="showAuthModal('login')">Login / Sign Up</button>
+                
+                <!-- Logged In -->
+                <div id="userMenu" class="user-menu hidden">
+                    <div class="user-info" onclick="toggleUserDropdown()">
+                        <span id="userName">User</span>
+                        <span id="userPlan" class="plan-badge">FREE</span>
+                        <span class="dropdown-arrow">▼</span>
+                    </div>
+                    <div id="userDropdown" class="user-dropdown hidden">
+                        <a href="dashboard.html">📊 Dashboard</a>
+                        <a href="#" onclick="viewStats()">📈 My Stats</a>
+                        <a href="#" onclick="viewHistory()">📜 History</a>
+                        <hr>
+                        <a href="#" onclick="event.preventDefault(); auth.logout(); return false;">🚪 Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Auth Modal -->
+    <div id="authModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal" onclick="hideAuthModal()">&times;</span>
+            
+            <!-- Login Form -->
+            <div id="loginForm">
+                <h2>Welcome Back!</h2>
+                <p class="modal-subtitle">Login to access your analysis history</p>
+                <form onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="loginEmail" required placeholder="your@email.com">
+                    </div>
+                    <button type="submit" class="modal-btn">Login</button>
+                </form>
+                <p class="form-switch">
+                    Don't have an account? 
+                    <a href="#" onclick="showAuthModal('register')">Create Account</a>
+                </p>
+            </div>
+            
+            <!-- Register Form -->
+            <div id="registerForm" class="hidden">
+                <h2>Create Account</h2>
+                <p class="modal-subtitle">Start analyzing your matches today</p>
+                <form onsubmit="handleRegister(event)">
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input type="text" id="registerName" required placeholder="John Doe">
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="registerEmail" required placeholder="your@email.com">
+                    </div>
+                    <button type="submit" class="modal-btn">Create Account</button>
+                </form>
+                <p class="form-switch">
+                    Already have an account? 
+                    <a href="#" onclick="showAuthModal('login')">Login</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- History Modal -->
+    <div id="historyModal" class="modal hidden">
+        <div class="modal-content modal-wide">
+            <span class="close-modal" onclick="closeModal('historyModal')">&times;</span>
+            <h2>📜 Analysis History</h2>
+            <div id="historyList" class="history-container"></div>
+        </div>
+    </div>
+
+    <!-- Stats Modal -->
+    <div id="statsModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal('statsModal')">&times;</span>
+            <h2>📈 Your Statistics</h2>
+            <div id="statsContent" class="stats-grid"></div>
+        </div>
+    </div>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1 class="hero-title">AI-Powered Arm Wrestling Analysis</h1>
+                <p class="hero-subtitle">Upload your match video and get instant technique breakdown, injury risk assessment, and personalized training recommendations</p>
+                <a href="#upload" class="cta-button">Analyze Your Match</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="container">
+            <h2 class="section-title">What We Analyze</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🎯</div>
+                    <h3>Technique Recognition</h3>
+                    <p>Detect top roll, hook, press, and king's move with transition analysis</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚠️</div>
+                    <h3>Injury Risk Detection</h3>
+                    <p>Identify elbow flare, shoulder stress, wrist collapse, and spine twist risks</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Strength vs Technique</h3>
+                    <p>Understand where you lost - was it strength or technique?</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔄</div>
+                    <h3>Frame Analysis</h3>
+                    <p>Slow-motion breakdown with force direction and joint angles</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💡</div>
+                    <h3>Training Recommendations</h3>
+                    <p>Get personalized exercises based on your weaknesses</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📈</div>
+                    <h3>Analysis History</h3>
+                    <p>Track your progress and improvements over time</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Upload Section -->
+    <section id="upload" class="upload-section">
+        <div class="container">
+            <h2 class="section-title">Analyze Your Match</h2>
+            <div class="upload-container">
+                <div class="upload-area" id="uploadArea">
+                    <input type="file" id="videoInput" accept="video/*" hidden>
+                    <div class="upload-content">
+                        <div class="upload-icon">📹</div>
+                        <p class="upload-text">Drop your video here or click to browse</p>
+                        <p class="upload-hint">Supports MP4, MOV, AVI (Max 100MB)</p>
+                    </div>
+                </div>
+                
+                <div id="videoPreview" class="video-preview hidden">
+                    <video id="previewVideo" controls></video>
+                    <div id="personSelection" class="person-selection hidden">
+                        <p class="person-selection-label">Which person are you?</p>
+                        <div class="person-options">
+                            <label class="person-option">
+                                <input type="radio" name="person" value="0" checked>
+                                <span>Left Person (Person 1)</span>
+                            </label>
+                            <label class="person-option">
+                                <input type="radio" name="person" value="1">
+                                <span>Right Person (Person 2)</span>
+                            </label>
+                        </div>
+                    </div>
+                    <button id="analyzeBtn" class="analyze-button">Analyze Video</button>
+                </div>
+
+                <div id="loadingState" class="loading-state hidden">
+                    <div class="spinner"></div>
+                    <p>Analyzing your match...</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                </div>
+
+                <div id="resultsSection" class="results-section hidden">
+                    <h3>Analysis Results</h3>
+                    
+                    <!-- Technique Detection -->
+                    <div class="result-card">
+                        <h4>🎯 Technique Detected</h4>
+                        <div id="techniqueResults"></div>
+                    </div>
+
+                    <!-- Injury Risks -->
+                    <div class="result-card">
+                        <h4>⚠️ Injury Risk Assessment</h4>
+                        <div id="injuryResults"></div>
+                    </div>
+
+                    <!-- Strength Analysis -->
+                    <div class="result-card">
+                        <h4>💪 Strength vs Technique</h4>
+                        <div id="strengthResults"></div>
+                    </div>
+
+                    <!-- Training Recommendations -->
+                    <div class="result-card">
+                        <h4>🏋️ Training Recommendations</h4>
+                        <div id="trainingResults"></div>
+                    </div>
+
+                    <button id="newAnalysis" class="cta-button">Analyze Another Video</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="pricing">
+        <div class="container">
+            <h2 class="section-title">Pricing Plans</h2>
+            <div class="pricing-grid">
+                <div class="pricing-card">
+                    <h3>Free</h3>
+                    <div class="price">₹0<span>/month</span></div>
+                    <ul class="features-list">
+                        <li>✓ 1 video per day</li>
+                        <li>✓ Basic technique detection</li>
+                        <li>✓ Risk assessment</li>
+                        <li>✓ Analysis history</li>
+                        <li>✗ Frame-by-frame analysis</li>
+                        <li>✗ Advanced metrics</li>
+                    </ul>
+                    <button class="pricing-button" onclick="showAuthModal('register')">Get Started</button>
+                </div>
+                <div class="pricing-card featured">
+                    <div class="badge">Popular</div>
+                    <h3>Pro</h3>
+                    <div class="price">₹699<span>/month</span></div>
+                    <ul class="features-list">
+                        <li>✓ Unlimited videos</li>
+                        <li>✓ Advanced analysis</li>
+                        <li>✓ Injury risk reports</li>
+                        <li>✓ Frame-by-frame breakdown</li>
+                        <li>✓ Training plans</li>
+                        <li>✓ Compare with pros</li>
+                    </ul>
+                    <button class="pricing-button" onclick="if(typeof auth !== 'undefined' && auth.isAuthenticated()) { window.location.href='dashboard.html'; } else { if(typeof showAuthModal === 'function') showAuthModal('login'); }">Upgrade Now</button>
+                </div>
+                <div class="pricing-card">
+                    <h3>Coach</h3>
+                    <div class="price">₹2,499<span>/month</span></div>
+                    <ul class="features-list">
+                        <li>✓ Everything in Pro</li>
+                        <li>✓ Team dashboard</li>
+                        <li>✓ Athlete tracking</li>
+                        <li>✓ Bulk upload</li>
+                        <li>✓ White-label reports</li>
+                        <li>✓ Priority support</li>
+                    </ul>
+                    <button class="pricing-button">Contact Sales</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 ArmWrestle AI. All rights reserved.</p>
+            <div class="footer-links">
+                <a href="#">Privacy Policy</a>
+                <a href="#">Terms of Service</a>
+                <a href="#">Contact</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Notification Container -->
+    <div id="notificationContainer"></div>
+
+    <!-- Razorpay Checkout Script -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script src="auth.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
