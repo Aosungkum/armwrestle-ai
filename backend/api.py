@@ -1,6 +1,7 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException, Form, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from typing import Optional, Dict, Any
 import tempfile
 import os
@@ -120,14 +121,49 @@ def mock_analysis(video_name: str) -> Dict[str, Any]:
     }
 
 # =========================
-# ROUTES
+# STATIC FILES (Frontend)
 # =========================
-@app.get("/")
-async def root():
-    return {
-        "message": "ArmWrestle AI API",
-        "mode": ANALYSIS_MODE
-    }
+# Get the path to frontend directory (one level up from backend)
+frontend_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend")
+if os.path.exists(frontend_path):
+    # Mount static files (CSS, JS, images)
+    app.mount("/static", StaticFiles(directory=frontend_path), name="static")
+    
+    # Serve frontend HTML files
+    @app.get("/")
+    async def serve_index():
+        index_path = os.path.join(frontend_path, "index.html")
+        if os.path.exists(index_path):
+            return FileResponse(index_path)
+        return {"message": "Frontend not found", "mode": ANALYSIS_MODE}
+    
+    @app.get("/dashboard.html")
+    async def serve_dashboard():
+        dashboard_path = os.path.join(frontend_path, "dashboard.html")
+        if os.path.exists(dashboard_path):
+            return FileResponse(dashboard_path)
+        raise HTTPException(404, "Dashboard not found")
+    
+    # Serve other frontend files
+    @app.get("/{filename}")
+    async def serve_frontend_file(filename: str):
+        file_path = os.path.join(frontend_path, filename)
+        if os.path.exists(file_path) and os.path.isfile(file_path):
+            return FileResponse(file_path)
+        # If file doesn't exist, try to serve index.html (for SPA routing)
+        index_path = os.path.join(frontend_path, "index.html")
+        if os.path.exists(index_path):
+            return FileResponse(index_path)
+        raise HTTPException(404, "File not found")
+else:
+    # Frontend not found, serve API info
+    @app.get("/")
+    async def root():
+        return {
+            "message": "ArmWrestle AI API",
+            "mode": ANALYSIS_MODE,
+            "note": "Frontend files not found. Deploy frontend separately or ensure frontend/ directory exists."
+        }
 
 @app.get("/api/health")
 async def health():
