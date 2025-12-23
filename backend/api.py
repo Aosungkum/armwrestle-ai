@@ -130,15 +130,11 @@ backend_dir = os.path.dirname(__file__)  # Where api.py is located
 root_dir = os.path.dirname(backend_dir) if "backend" in backend_dir else current_dir
 
 possible_frontend_paths = [
-    os.path.join(current_dir, "frontend"),  # /app/frontend (if Railway deploys root)
-    os.path.join(current_dir, "..", "frontend"),  # /app/../frontend (if backend/ is root)
+    os.path.join(current_dir, "..", "frontend"),  # /app/../frontend (if backend/ is root, go up to repo root)
     os.path.join(root_dir, "frontend"),  # Root/frontend
-    os.path.join(backend_dir, "frontend"),  # backend/frontend (if copied)
-    os.path.join(current_dir, "backend", "frontend"),  # /app/backend/frontend
-    "/app/frontend",  # Absolute path
-    "/app/../frontend",  # Absolute path one level up
+    os.path.join(current_dir, "frontend"),  # /app/frontend (if Railway deploys root)
+    "../frontend",  # One level up (relative)
     "frontend",  # Relative to current dir
-    "../frontend",  # One level up
 ]
 
 frontend_path = None
