@@ -139,14 +139,31 @@ possible_frontend_paths = [
 ]
 
 frontend_path = None
+print(f"[DEBUG] Current dir: {current_dir}")
+print(f"[DEBUG] Backend dir: {backend_dir}")
+print(f"[DEBUG] Root dir: {root_dir}")
+
 for path in possible_frontend_paths:
     abs_path = os.path.abspath(path)
     if os.path.exists(abs_path) and os.path.isdir(abs_path):
-        frontend_path = abs_path
-        print(f"[INFO] Found frontend at: {frontend_path}")
-        break
-    else:
-        print(f"[DEBUG] Tried path: {abs_path} (exists: {os.path.exists(abs_path)})")
+        # Check if index.html exists
+        index_file = os.path.join(abs_path, "index.html")
+        if os.path.exists(index_file):
+            frontend_path = abs_path
+            print(f"[INFO] Found frontend at: {frontend_path}")
+            break
+    print(f"[DEBUG] Tried path: {abs_path} (exists: {os.path.exists(abs_path)})")
+    
+# List what's actually in /app to help debug
+if current_dir == "/app":
+    print(f"[DEBUG] Contents of /app:")
+    try:
+        for item in os.listdir(current_dir):
+            item_path = os.path.join(current_dir, item)
+            item_type = "DIR" if os.path.isdir(item_path) else "FILE"
+            print(f"[DEBUG]   {item_type}: {item}")
+    except Exception as e:
+        print(f"[DEBUG] Could not list /app: {e}")
 
 if frontend_path and os.path.exists(frontend_path):
     # Mount static files (CSS, JS, images)
