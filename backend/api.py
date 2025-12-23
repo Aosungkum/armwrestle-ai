@@ -124,20 +124,29 @@ def mock_analysis(video_name: str) -> Dict[str, Any]:
 # STATIC FILES (Frontend)
 # =========================
 # Try multiple paths to find frontend directory
-# Railway might deploy from root or backend directory
+# Railway deploys from root, so frontend could be at root or in backend/
+current_dir = os.getcwd()  # Usually /app on Railway
+backend_dir = os.path.dirname(__file__)  # Where api.py is located
+root_dir = os.path.dirname(backend_dir) if "backend" in backend_dir else current_dir
+
 possible_frontend_paths = [
-    os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend"),  # ../frontend
-    os.path.join(os.path.dirname(__file__), "frontend"),  # ./frontend (if copied)
-    os.path.join(os.getcwd(), "frontend"),  # Current working directory
+    os.path.join(current_dir, "frontend"),  # /app/frontend (if Railway deploys root)
+    os.path.join(root_dir, "frontend"),  # Root/frontend
+    os.path.join(backend_dir, "frontend"),  # backend/frontend (if copied)
+    os.path.join(current_dir, "backend", "frontend"),  # /app/backend/frontend
     "frontend",  # Relative to current dir
+    "../frontend",  # One level up
 ]
 
 frontend_path = None
 for path in possible_frontend_paths:
-    if os.path.exists(path) and os.path.isdir(path):
-        frontend_path = path
+    abs_path = os.path.abspath(path)
+    if os.path.exists(abs_path) and os.path.isdir(abs_path):
+        frontend_path = abs_path
         print(f"[INFO] Found frontend at: {frontend_path}")
         break
+    else:
+        print(f"[DEBUG] Tried path: {abs_path} (exists: {os.path.exists(abs_path)})")
 
 if frontend_path and os.path.exists(frontend_path):
     # Mount static files (CSS, JS, images)
