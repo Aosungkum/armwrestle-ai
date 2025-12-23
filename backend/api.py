@@ -131,9 +131,12 @@ root_dir = os.path.dirname(backend_dir) if "backend" in backend_dir else current
 
 possible_frontend_paths = [
     os.path.join(current_dir, "frontend"),  # /app/frontend (if Railway deploys root)
+    os.path.join(current_dir, "..", "frontend"),  # /app/../frontend (if backend/ is root)
     os.path.join(root_dir, "frontend"),  # Root/frontend
     os.path.join(backend_dir, "frontend"),  # backend/frontend (if copied)
     os.path.join(current_dir, "backend", "frontend"),  # /app/backend/frontend
+    "/app/frontend",  # Absolute path
+    "/app/../frontend",  # Absolute path one level up
     "frontend",  # Relative to current dir
     "../frontend",  # One level up
 ]
