@@ -75,6 +75,38 @@ db = Database()
 active_sessions = {}
 
 # =========================
+# STATIC FILES (Frontend)
+# =========================
+# Serve frontend files from root directory (for Railway deployment)
+# Try multiple possible paths where frontend might be located
+frontend_paths = [
+    "../frontend",  # If backend is in backend/ folder
+    "../",  # If frontend is in root
+    "frontend",  # If frontend is in same directory
+    ".",  # Current directory
+]
+
+frontend_dir = None
+for path in frontend_paths:
+    if os.path.exists(path) and os.path.isdir(path):
+        # Check if it contains index.html
+        index_path = os.path.join(path, "index.html")
+        if os.path.exists(index_path):
+            frontend_dir = path
+            print(f"[OK] Frontend found at: {os.path.abspath(frontend_dir)}")
+            break
+
+if frontend_dir:
+    # Mount static files
+    app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="static")
+    print(f"[OK] Frontend files will be served from: {frontend_dir}")
+else:
+    print("[WARNING] Frontend directory not found. API-only mode.")
+    print(f"[DEBUG] Checked paths: {frontend_paths}")
+    print(f"[DEBUG] Current working directory: {os.getcwd()}")
+    print(f"[DEBUG] Files in current dir: {os.listdir('.') if os.path.exists('.') else 'N/A'}")
+
+# =========================
 # AUTH HELPERS
 # =========================
 def generate_token():
