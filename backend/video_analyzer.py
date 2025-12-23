@@ -535,13 +535,23 @@ class ArmWrestlingAnalyzer:
         """Main function to analyze arm wrestling video"""
         import hashlib
         import os
+        import random
         
         # Get video-specific hash for variation (ensures different videos = different results)
         video_hash = 0
+        video_size = 0
         if os.path.exists(video_path):
+            video_size = os.path.getsize(video_path)
+            # Read more of the file for better hash variation
             with open(video_path, 'rb') as f:
-                video_hash = int(hashlib.md5(f.read(1024)).hexdigest()[:8], 16) % 1000
+                file_data = f.read(min(8192, video_size))  # Read up to 8KB
+                video_hash = int(hashlib.md5(file_data).hexdigest()[:12], 16) % 10000
         self.video_hash = video_hash  # Store for use in analysis
+        self.video_size = video_size
+        
+        # Seed random with video hash for consistent but video-specific variation
+        random.seed(video_hash)
+        print(f"[VIDEO] Video hash: {video_hash}, size: {video_size} bytes")
         
         cap = cv2.VideoCapture(video_path)
         
