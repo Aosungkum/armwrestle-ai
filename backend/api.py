@@ -121,100 +121,16 @@ def mock_analysis(video_name: str) -> Dict[str, Any]:
     }
 
 # =========================
-# STATIC FILES (Frontend)
+# API ROOT
 # =========================
-# Try multiple paths to find frontend directory
-# Railway deploys from root, so frontend could be at root or in backend/
-current_dir = os.getcwd()  # Usually /app on Railway
-backend_dir = os.path.dirname(__file__)  # Where api.py is located
-root_dir = os.path.dirname(backend_dir) if "backend" in backend_dir else current_dir
-
-possible_frontend_paths = [
-    os.path.join(current_dir, "..", "frontend"),  # /app/../frontend (if backend/ is root, go up to repo root)
-    os.path.join(root_dir, "frontend"),  # Root/frontend
-    os.path.join(current_dir, "frontend"),  # /app/frontend (if Railway deploys root)
-    "../frontend",  # One level up (relative)
-    "frontend",  # Relative to current dir
-]
-
-frontend_path = None
-print(f"[DEBUG] Current dir: {current_dir}")
-print(f"[DEBUG] Backend dir: {backend_dir}")
-print(f"[DEBUG] Root dir: {root_dir}")
-
-for path in possible_frontend_paths:
-    abs_path = os.path.abspath(path)
-    if os.path.exists(abs_path) and os.path.isdir(abs_path):
-        # Check if index.html exists
-        index_file = os.path.join(abs_path, "index.html")
-        if os.path.exists(index_file):
-            frontend_path = abs_path
-            print(f"[INFO] Found frontend at: {frontend_path}")
-            break
-    print(f"[DEBUG] Tried path: {abs_path} (exists: {os.path.exists(abs_path)})")
-    
-# List what's actually in /app to help debug
-if current_dir == "/app":
-    print(f"[DEBUG] Contents of /app:")
-    try:
-        for item in os.listdir(current_dir):
-            item_path = os.path.join(current_dir, item)
-            item_type = "DIR" if os.path.isdir(item_path) else "FILE"
-            print(f"[DEBUG]   {item_type}: {item}")
-    except Exception as e:
-        print(f"[DEBUG] Could not list /app: {e}")
-
-if frontend_path and os.path.exists(frontend_path):
-    # Mount static files (CSS, JS, images)
-    try:
-        app.mount("/static", StaticFiles(directory=frontend_path), name="static")
-    except Exception as e:
-        print(f"[WARNING] Could not mount static files: {e}")
-    
-    # Serve frontend HTML files
-    @app.get("/")
-    async def serve_index():
-        index_path = os.path.join(frontend_path, "index.html")
-        if os.path.exists(index_path):
-            return FileResponse(index_path)
-        return {"message": "Frontend index.html not found", "mode": ANALYSIS_MODE, "path": frontend_path}
-    
-    @app.get("/dashboard.html")
-    async def serve_dashboard():
-        dashboard_path = os.path.join(frontend_path, "dashboard.html")
-        if os.path.exists(dashboard_path):
-            return FileResponse(dashboard_path)
-        raise HTTPException(404, "Dashboard not found")
-    
-    # Serve frontend JS/CSS files
-    @app.get("/{filename:path}")
-    async def serve_frontend_file(filename: str):
-        # Don't serve API routes as files
-        if filename.startswith("api/"):
-            raise HTTPException(404, "API route")
-        
-        file_path = os.path.join(frontend_path, filename)
-        if os.path.exists(file_path) and os.path.isfile(file_path):
-            return FileResponse(file_path)
-        
-        # If it's an HTML-like request, try index.html (for SPA routing)
-        if not "." in filename or filename.endswith(".html"):
-            index_path = os.path.join(frontend_path, "index.html")
-            if os.path.exists(index_path):
-                return FileResponse(index_path)
-        
-        raise HTTPException(404, f"File not found: {filename}")
-else:
-    # Frontend not found, serve API info
-    @app.get("/")
-    async def root():
-        return {
-            "message": "ArmWrestle AI API",
-            "mode": ANALYSIS_MODE,
-            "note": "Frontend files not found. Tried paths: " + str(possible_frontend_paths),
-            "cwd": os.getcwd(),
-            "backend_dir": os.path.dirname(__file__)
-        }
+@app.get("/")
+async def root():
+    return {
+        "message": "ArmWrestle AI API",
+        "mode": ANALYSIS_MODE,
+        "version": "1.0.0",
+        "docs": "/docs"
+    }
 
 @app.get("/api/health")
 async def health():
