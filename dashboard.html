@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - ArmWrestle AI</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <a href="index.html" style="color: white; text-decoration: none;">
+                    <h1>💪 ArmWrestle AI</h1>
+                </a>
+            </div>
+            <div class="nav-links">
+                <a href="index.html">Home</a>
+                <a href="index.html#features">Features</a>
+                <a href="index.html#upload">Analyze</a>
+                
+                <div class="user-menu">
+                    <div class="user-info" onclick="toggleUserDropdown()">
+                        <span id="userName">User</span>
+                        <span id="userPlan" class="plan-badge">FREE</span>
+                        <span class="dropdown-arrow">▼</span>
+                    </div>
+                    <div id="userDropdown" class="user-dropdown hidden">
+                        <a href="dashboard.html" class="active">📊 Dashboard</a>
+                        <a href="#" onclick="refreshStats()">🔄 Refresh Stats</a>
+                        <hr>
+                        <a href="#" onclick="event.preventDefault(); auth.logout(); return false;">🚪 Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Dashboard Container -->
+    <div class="dashboard-container">
+        <div class="container">
+            <!-- Welcome Section -->
+            <div class="dashboard-header">
+                <h1>Welcome, <span id="dashboardUserName">User</span>! 👋</h1>
+                <p class="dashboard-subtitle">Track your arm wrestling progress and view analysis history</p>
+            </div>
+
+            <!-- Stats Overview -->
+            <div class="stats-overview">
+                <h2 class="section-title">📊 Your Statistics</h2>
+                <div class="stats-grid-dash" id="statsGrid">
+                    <div class="stat-card-dash">
+                        <div class="stat-icon">📹</div>
+                        <div class="stat-info">
+                            <div class="stat-label">Total Analyses</div>
+                            <div class="stat-value" id="statTotalAnalyses">-</div>
+                        </div>
+                    </div>
+                    <div class="stat-card-dash">
+                        <div class="stat-icon">🎯</div>
+                        <div class="stat-info">
+                            <div class="stat-label">Most Used Technique</div>
+                            <div class="stat-value" id="statTopTechnique">-</div>
+                        </div>
+                    </div>
+                    <div class="stat-card-dash">
+                        <div class="stat-icon">📅</div>
+                        <div class="stat-info">
+                            <div class="stat-label">Today's Usage</div>
+                            <div class="stat-value" id="statDailyUsage">-</div>
+                        </div>
+                    </div>
+                    <div class="stat-card-dash">
+                        <div class="stat-icon">💎</div>
+                        <div class="stat-info">
+                            <div class="stat-label">Current Plan</div>
+                            <div class="stat-value" id="statPlan">-</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <a href="index.html#upload" class="action-card">
+                    <div class="action-icon">🎥</div>
+                    <div class="action-text">
+                        <h3>New Analysis</h3>
+                        <p>Upload a new video</p>
+                    </div>
+                </a>
+                <a href="#" onclick="showUpgradeModal()" class="action-card">
+                    <div class="action-icon">⬆️</div>
+                    <div class="action-text">
+                        <h3>Upgrade Plan</h3>
+                        <p>Get unlimited analyses</p>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Analysis History -->
+            <div class="history-section">
+                <div class="section-header">
+                    <h2 class="section-title">📜 Analysis History</h2>
+                    <button class="refresh-btn" onclick="loadHistory()">🔄 Refresh</button>
+                </div>
+                
+                <div id="historyContainer" class="history-grid">
+                    <!-- History items will be loaded here -->
+                </div>
+
+                <div id="emptyState" class="empty-state hidden">
+                    <div class="empty-icon">📭</div>
+                    <h3>No Analyses Yet</h3>
+                    <p>Upload your first video to get started!</p>
+                    <a href="index.html#upload" class="cta-button">Analyze First Video</a>
+                </div>
+
+                <div id="loadingHistory" class="loading-state">
+                    <div class="spinner"></div>
+                    <p>Loading your history...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analysis Detail Modal -->
+    <div id="detailModal" class="modal hidden">
+        <div class="modal-content modal-wide">
+            <span class="close-modal" onclick="closeDetailModal()">&times;</span>
+            <h2 id="detailTitle">Analysis Details</h2>
+            <div id="detailContent"></div>
+        </div>
+    </div>
+
+    <!-- Upgrade Modal -->
+    <div id="upgradeModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeUpgradeModal()">&times;</span>
+            <h2>⬆️ Upgrade Your Plan</h2>
+            <p class="modal-subtitle">Unlock unlimited analyses and advanced features</p>
+            
+            <div class="upgrade-plans">
+                <div class="upgrade-plan" onclick="handleUpgrade('pro')">
+                    <h3>Pro Plan</h3>
+                    <div class="upgrade-price">₹699<span>/month</span></div>
+                    <ul>
+                        <li>✓ Unlimited video analyses</li>
+                        <li>✓ Advanced metrics</li>
+                        <li>✓ Frame-by-frame analysis</li>
+                        <li>✓ Priority support</li>
+                    </ul>
+                    <button class="modal-btn">Upgrade to Pro</button>
+                </div>
+                <div class="upgrade-plan" onclick="handleUpgrade('coach')">
+                    <h3>Coach Plan</h3>
+                    <div class="upgrade-price">₹2,499<span>/month</span></div>
+                    <ul>
+                        <li>✓ Everything in Pro</li>
+                        <li>✓ Team dashboard</li>
+                        <li>✓ Multiple athletes</li>
+                        <li>✓ White-label reports</li>
+                    </ul>
+                    <button class="modal-btn">Upgrade to Coach</button>
+                </div>
+            </div>
+            
+            <p class="upgrade-note">Secure payment powered by Razorpay</p>
+        </div>
+    </div>
+
+    <!-- Razorpay Checkout Script -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script src="auth.js"></script>
+    <script src="dashboard.js"></script>
+</body>
+</html>
