@@ -155,8 +155,10 @@ def mock_analysis(video_name: str) -> Dict[str, Any]:
 # =========================
 # API ROOT
 # =========================
-@app.get("/")
-async def root():
+# Note: Root route "/" is handled by StaticFiles mount above
+# This endpoint is only reached if static files aren't found
+@app.get("/api")
+async def api_root():
     return {
         "message": "ArmWrestle AI API",
         "mode": ANALYSIS_MODE,
