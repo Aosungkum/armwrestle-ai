@@ -79,32 +79,48 @@ active_sessions = {}
 # =========================
 # Serve frontend files from root directory (for Railway deployment)
 # Try multiple possible paths where frontend might be located
+backend_dir = os.path.dirname(os.path.abspath(__file__))  # Directory where api.py is located
+project_root = os.path.dirname(backend_dir)  # Parent directory (project root)
+
 frontend_paths = [
-    "../frontend",  # If backend is in backend/ folder
-    "../",  # If frontend is in root
-    "frontend",  # If frontend is in same directory
+    project_root,  # Project root (where frontend/ folder is)
+    os.path.join(project_root, "frontend"),  # frontend/ subdirectory
+    os.path.join(backend_dir, ".."),  # One level up from backend
+    os.path.join(backend_dir, "..", "frontend"),  # frontend/ from backend
+    "../",  # Relative: one level up
+    "../frontend",  # Relative: frontend folder
+    "frontend",  # Same directory
     ".",  # Current directory
 ]
 
 frontend_dir = None
 for path in frontend_paths:
-    if os.path.exists(path) and os.path.isdir(path):
+    abs_path = os.path.abspath(path) if os.path.isabs(path) else os.path.abspath(os.path.join(backend_dir, path))
+    if os.path.exists(abs_path):
         # Check if it contains index.html
-        index_path = os.path.join(path, "index.html")
+        index_path = os.path.join(abs_path, "index.html")
         if os.path.exists(index_path):
-            frontend_dir = path
-            print(f"[OK] Frontend found at: {os.path.abspath(frontend_dir)}")
+            frontend_dir = abs_path
+            print(f"[OK] Frontend found at: {frontend_dir}")
+            print(f"[DEBUG] Backend dir: {backend_dir}")
+            print(f"[DEBUG] Project root: {project_root}")
             break
 
 if frontend_dir:
-    # Mount static files
+    # Mount static files - this will serve frontend for all non-API routes
     app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="static")
     print(f"[OK] Frontend files will be served from: {frontend_dir}")
+    print(f"[OK] API routes are available at /api/*")
 else:
     print("[WARNING] Frontend directory not found. API-only mode.")
     print(f"[DEBUG] Checked paths: {frontend_paths}")
     print(f"[DEBUG] Current working directory: {os.getcwd()}")
-    print(f"[DEBUG] Files in current dir: {os.listdir('.') if os.path.exists('.') else 'N/A'}")
+    print(f"[DEBUG] Backend directory: {backend_dir}")
+    print(f"[DEBUG] Project root: {project_root}")
+    if os.path.exists(backend_dir):
+        print(f"[DEBUG] Files in backend dir: {os.listdir(backend_dir)[:10]}")
+    if os.path.exists(project_root):
+        print(f"[DEBUG] Files in project root: {os.listdir(project_root)[:10]}")
 
 # =========================
 # AUTH HELPERS
