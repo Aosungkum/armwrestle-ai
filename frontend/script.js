@@ -341,6 +341,82 @@ function displayAPIResults(data) {
             ${data.recommendations.map(rec => `<li>${rec}</li>`).join('')}
         </ul>
     `;
+    
+    // Why You Lost Analysis (NEW)
+    if (data.why_you_lost) {
+        const whyLostSection = document.createElement('div');
+        whyLostSection.className = 'analysis-section';
+        whyLostSection.innerHTML = `
+            <h3>🎯 Why You Lost</h3>
+            <div class="why-lost-card">
+                <div class="primary-reason">
+                    <strong>Primary Reason:</strong> ${data.why_you_lost.primary_reason}
+                </div>
+                <div class="detailed-reasons">
+                    <strong>Detailed Analysis:</strong>
+                    <ul>
+                        ${data.why_you_lost.detailed_reasons.map(reason => `<li>${reason}</li>`).join('')}
+                    </ul>
+                </div>
+                <div class="summary">
+                    <strong>Summary:</strong> ${data.why_you_lost.summary}
+                </div>
+            </div>
+        `;
+        document.getElementById('resultsSection').appendChild(whyLostSection);
+    }
+    
+    // Style Analysis (NEW)
+    if (data.style_analysis) {
+        const styleSection = document.createElement('div');
+        styleSection.className = 'analysis-section';
+        styleSection.innerHTML = `
+            <h3>🥊 Your Fighting Style</h3>
+            <div class="style-card">
+                <div class="style-name">
+                    <strong>Style:</strong> ${data.style_analysis.style_name}
+                </div>
+                <div class="primary-technique">
+                    <strong>Primary Technique:</strong> ${data.style_analysis.primary_technique}
+                </div>
+                <div class="fighting-approach">
+                    <strong>Approach:</strong> ${data.style_analysis.fighting_approach}
+                </div>
+                <div class="style-traits">
+                    <strong>Traits:</strong>
+                    <ul>
+                        ${data.style_analysis.traits.map(trait => `<li>${trait}</li>`).join('')}
+                    </ul>
+                </div>
+            </div>
+        `;
+        document.getElementById('resultsSection').appendChild(styleSection);
+    }
+    
+    // Person Info (NEW)
+    if (data.person_info) {
+        const personInfoSection = document.createElement('div');
+        personInfoSection.className = 'analysis-section';
+        personInfoSection.innerHTML = `
+            <h3>👤 Person Information</h3>
+            <div class="person-info-card">
+                <div><strong>Selected Person:</strong> ${data.person_info.selected_person}</div>
+                <div><strong>Position:</strong> ${data.person_info.position}</div>
+                <div><strong>This is YOU:</strong> ${data.person_info.is_you ? '✅ Yes' : '❌ No'}</div>
+            </div>
+        `;
+        document.getElementById('resultsSection').appendChild(personInfoSection);
+    }
+    
+    // Video Details (NEW)
+    if (data.video_details) {
+        console.log("[VIDEO DETAILS]", {
+            video_hash: data.video_details.video_hash,
+            frames_analyzed: data.video_details.frames_analyzed,
+            person_analyzed: data.video_details.person_analyzed,
+            duration: data.video_details.analysis_timestamp
+        });
+    }
 }
 
 // Display history list
