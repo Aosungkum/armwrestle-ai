@@ -9,3 +9,11 @@ node_modules/
 
 # Env
 .env
+
+# Database
+*.db
+*.db-journal
+backend/armwrestle.db
+
+# Uploads
+backend/uploads/

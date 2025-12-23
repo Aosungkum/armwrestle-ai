@@ -17,9 +17,91 @@
                 <a href="#features">Features</a>
                 <a href="#upload">Analyze</a>
                 <a href="#pricing">Pricing</a>
+                
+                <!-- Not Logged In -->
+                <button id="loginBtn" class="nav-login-btn" onclick="showAuthModal('login')">Login / Sign Up</button>
+                
+                <!-- Logged In -->
+                <div id="userMenu" class="user-menu hidden">
+                    <div class="user-info" onclick="toggleUserDropdown()">
+                        <span id="userName">User</span>
+                        <span id="userPlan" class="plan-badge">FREE</span>
+                        <span class="dropdown-arrow">▼</span>
+                    </div>
+                    <div id="userDropdown" class="user-dropdown hidden">
+                        <a href="dashboard.html">📊 Dashboard</a>
+                        <a href="#" onclick="viewStats()">📈 My Stats</a>
+                        <a href="#" onclick="viewHistory()">📜 History</a>
+                        <hr>
+                        <a href="#" onclick="event.preventDefault(); auth.logout(); return false;">🚪 Logout</a>
+                    </div>
+                </div>
             </div>
         </div>
     </nav>
+
+    <!-- Auth Modal -->
+    <div id="authModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal" onclick="hideAuthModal()">&times;</span>
+            
+            <!-- Login Form -->
+            <div id="loginForm">
+                <h2>Welcome Back!</h2>
+                <p class="modal-subtitle">Login to access your analysis history</p>
+                <form onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="loginEmail" required placeholder="your@email.com">
+                    </div>
+                    <button type="submit" class="modal-btn">Login</button>
+                </form>
+                <p class="form-switch">
+                    Don't have an account? 
+                    <a href="#" onclick="showAuthModal('register')">Create Account</a>
+                </p>
+            </div>
+            
+            <!-- Register Form -->
+            <div id="registerForm" class="hidden">
+                <h2>Create Account</h2>
+                <p class="modal-subtitle">Start analyzing your matches today</p>
+                <form onsubmit="handleRegister(event)">
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input type="text" id="registerName" required placeholder="John Doe">
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="registerEmail" required placeholder="your@email.com">
+                    </div>
+                    <button type="submit" class="modal-btn">Create Account</button>
+                </form>
+                <p class="form-switch">
+                    Already have an account? 
+                    <a href="#" onclick="showAuthModal('login')">Login</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- History Modal -->
+    <div id="historyModal" class="modal hidden">
+        <div class="modal-content modal-wide">
+            <span class="close-modal" onclick="closeModal('historyModal')">&times;</span>
+            <h2>📜 Analysis History</h2>
+            <div id="historyList" class="history-container"></div>
+        </div>
+    </div>
+
+    <!-- Stats Modal -->
+    <div id="statsModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal('statsModal')">&times;</span>
+            <h2>📈 Your Statistics</h2>
+            <div id="statsContent" class="stats-grid"></div>
+        </div>
+    </div>
 
     <!-- Hero Section -->
     <section class="hero">
@@ -64,8 +146,8 @@
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">📈</div>
-                    <h3>Fatigue Tracking</h3>
-                    <p>Analyze power drop and endurance throughout the match</p>
+                    <h3>Analysis History</h3>
+                    <p>Track your progress and improvements over time</p>
                 </div>
             </div>
         </div>
@@ -87,6 +169,19 @@
                 
                 <div id="videoPreview" class="video-preview hidden">
                     <video id="previewVideo" controls></video>
+                    <div id="personSelection" class="person-selection hidden">
+                        <p class="person-selection-label">Which person are you?</p>
+                        <div class="person-options">
+                            <label class="person-option">
+                                <input type="radio" name="person" value="0" checked>
+                                <span>Left Person (Person 1)</span>
+                            </label>
+                            <label class="person-option">
+                                <input type="radio" name="person" value="1">
+                                <span>Right Person (Person 2)</span>
+                            </label>
+                        </div>
+                    </div>
                     <button id="analyzeBtn" class="analyze-button">Analyze Video</button>
                 </div>
 
@@ -140,27 +235,28 @@
                     <h3>Free</h3>
                     <div class="price">₹0<span>/month</span></div>
                     <ul class="features-list">
-                        <li>✓ Basic technique detection</li>
                         <li>✓ 1 video per day</li>
-                        <li>✓ Simple risk assessment</li>
+                        <li>✓ Basic technique detection</li>
+                        <li>✓ Risk assessment</li>
+                        <li>✓ Analysis history</li>
                         <li>✗ Frame-by-frame analysis</li>
-                        <li>✗ Training plans</li>
+                        <li>✗ Advanced metrics</li>
                     </ul>
-                    <button class="pricing-button">Current Plan</button>
+                    <button class="pricing-button" onclick="showAuthModal('register')">Get Started</button>
                 </div>
                 <div class="pricing-card featured">
                     <div class="badge">Popular</div>
                     <h3>Pro</h3>
                     <div class="price">₹699<span>/month</span></div>
                     <ul class="features-list">
-                        <li>✓ Advanced technique analysis</li>
                         <li>✓ Unlimited videos</li>
-                        <li>✓ Detailed injury risk reports</li>
+                        <li>✓ Advanced analysis</li>
+                        <li>✓ Injury risk reports</li>
                         <li>✓ Frame-by-frame breakdown</li>
-                        <li>✓ Personalized training plans</li>
-                        <li>✓ Fatigue detection</li>
+                        <li>✓ Training plans</li>
+                        <li>✓ Compare with pros</li>
                     </ul>
-                    <button class="pricing-button">Upgrade Now</button>
+                    <button class="pricing-button" onclick="if(typeof auth !== 'undefined' && auth.isAuthenticated()) { window.location.href='dashboard.html'; } else { if(typeof showAuthModal === 'function') showAuthModal('login'); }">Upgrade Now</button>
                 </div>
                 <div class="pricing-card">
                     <h3>Coach</h3>
@@ -168,8 +264,8 @@
                     <ul class="features-list">
                         <li>✓ Everything in Pro</li>
                         <li>✓ Team dashboard</li>
-                        <li>✓ Athlete progress tracking</li>
-                        <li>✓ Bulk video upload</li>
+                        <li>✓ Athlete tracking</li>
+                        <li>✓ Bulk upload</li>
                         <li>✓ White-label reports</li>
                         <li>✓ Priority support</li>
                     </ul>
@@ -191,6 +287,12 @@
         </div>
     </footer>
 
+    <!-- Notification Container -->
+    <div id="notificationContainer"></div>
+
+    <!-- Razorpay Checkout Script -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script src="auth.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

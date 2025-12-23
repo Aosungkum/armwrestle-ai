@@ -58,6 +58,23 @@ class Database:
             )
         ''')
         
+        # Subscriptions table for payment tracking
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS subscriptions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                plan TEXT NOT NULL,
+                razorpay_order_id TEXT UNIQUE,
+                razorpay_payment_id TEXT,
+                razorpay_signature TEXT,
+                amount INTEGER NOT NULL,
+                status TEXT DEFAULT 'pending',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                expires_at TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id)
+            )
+        ''')
+        
         conn.commit()
         conn.close()
     
@@ -268,3 +285,75 @@ class Database:
         }
         
         return daily_usage < limits.get(plan, 1)
+    
+    # Subscription operations
+    def create_subscription(self, user_id: int, plan: str, amount: int, 
+                           razorpay_order_id: str) -> int:
+        """Create a new subscription record"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        # Calculate expiry (30 days from now)
+        from datetime import datetime, timedelta
+        expires_at = datetime.now() + timedelta(days=30)
+        
+        cursor.execute('''
+            INSERT INTO subscriptions 
+            (user_id, plan, razorpay_order_id, amount, expires_at)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (user_id, plan, razorpay_order_id, amount, expires_at))
+        
+        conn.commit()
+        subscription_id = cursor.lastrowid
+        conn.close()
+        
+        return subscription_id
+    
+    def update_subscription_payment(self, razorpay_order_id: str, 
+                                   razorpay_payment_id: str, 
+                                   razorpay_signature: str, 
+                                   status: str = 'completed'):
+        """Update subscription with payment details"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            UPDATE subscriptions 
+            SET razorpay_payment_id = ?, 
+                razorpay_signature = ?, 
+                status = ?
+            WHERE razorpay_order_id = ?
+        ''', (razorpay_payment_id, razorpay_signature, status, razorpay_order_id))
+        
+        conn.commit()
+        
+        # Get user_id from subscription
+        cursor.execute('SELECT user_id, plan FROM subscriptions WHERE razorpay_order_id = ?', 
+                      (razorpay_order_id,))
+        result = cursor.fetchone()
+        conn.close()
+        
+        if result:
+            return {'user_id': result[0], 'plan': result[1]}
+        return None
+    
+    def get_active_subscription(self, user_id: int):
+        """Get user's active subscription"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT * FROM subscriptions 
+            WHERE user_id = ? 
+            AND status = 'completed'
+            AND expires_at > datetime('now')
+            ORDER BY created_at DESC
+            LIMIT 1
+        ''', (user_id,))
+        
+        row = cursor.fetchone()
+        conn.close()
+        
+        if row:
+            return dict(row)
+        return None

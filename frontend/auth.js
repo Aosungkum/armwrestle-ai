@@ -1,9 +1,16 @@
 // Authentication Module
 class AuthManager {
     constructor() {
-        this.API_URL = 'http://localhost:8000/api';
+        this.API_URL = 'https://armwrestle-ai-production.up.railway.app/api';
         this.token = localStorage.getItem('auth_token');
-        this.user = JSON.parse(localStorage.getItem('user') || 'null');
+        // Safe JSON parsing with error handling
+        try {
+            const userStr = localStorage.getItem('user');
+            this.user = userStr ? JSON.parse(userStr) : null;
+        } catch (error) {
+            console.error('Error parsing user data from localStorage:', error);
+            this.user = null;
+        }
     }
 
     // Check if user is logged in
@@ -56,6 +63,11 @@ class AuthManager {
                 body: formData
             });
 
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                return { success: false, error: errorData.error || 'Login failed' };
+            }
+
             const data = await response.json();
 
             if (data.success) {
@@ -65,7 +77,7 @@ class AuthManager {
                 localStorage.setItem('user', JSON.stringify(this.user));
                 return { success: true, user: this.user };
             } else {
-                return { success: false, error: 'Login failed' };
+                return { success: false, error: data.error || 'Login failed' };
             }
         } catch (error) {
             console.error('Login error:', error);
@@ -75,15 +87,36 @@ class AuthManager {
 
     // Logout user
     logout() {
-        this.token = null;
-        this.user = null;
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('user');
-        window.location.href = '/';
+        try {
+            // Clear token and user data
+            this.token = null;
+            this.user = null;
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('user');
+            
+            // Update UI immediately
+            if (typeof updateUIForAuthState === 'function') {
+                updateUIForAuthState();
+            }
+            
+            // Determine redirect path based on current page
+            const currentPath = window.location.pathname;
+            const redirectPath = currentPath.includes('dashboard.html') ? 'index.html' : './index.html';
+            
+            // Redirect to home page
+            window.location.href = redirectPath;
+        } catch (error) {
+            console.error('Logout error:', error);
+            // Fallback: try to redirect anyway
+            window.location.href = 'index.html';
+        }
     }
 
     // Get authorization header
     getAuthHeader() {
+        if (!this.token) {
+            return {};
+        }
         return {
             'Authorization': `Bearer ${this.token}`
         };
@@ -93,14 +126,21 @@ class AuthManager {
     async getStats() {
         try {
             const response = await fetch(`${this.API_URL}/stats`, {
-                headers: this.getAuthHeader()
+                headers: {
+                    ...this.getAuthHeader()
+                }
             });
+
+            if (!response.ok) {
+                console.error('Failed to fetch stats:', response.status);
+                return { success: false, error: 'Failed to fetch statistics' };
+            }
 
             const data = await response.json();
             return data;
         } catch (error) {
             console.error('Error fetching stats:', error);
-            return null;
+            return { success: false, error: 'Failed to fetch statistics' };
         }
     }
 
@@ -108,40 +148,160 @@ class AuthManager {
     async getHistory() {
         try {
             const response = await fetch(`${this.API_URL}/history`, {
-                headers: this.getAuthHeader()
+                headers: {
+                    ...this.getAuthHeader()
+                }
             });
+
+            if (!response.ok) {
+                console.error('Failed to fetch history:', response.status);
+                return { success: false, error: 'Failed to fetch history' };
+            }
 
             const data = await response.json();
             return data;
         } catch (error) {
             console.error('Error fetching history:', error);
-            return null;
+            return { success: false, error: 'Failed to fetch history' };
         }
     }
 
-    // Upgrade plan
-    async upgradePlan(plan) {
+    // Create payment order for plan upgrade
+    async createPaymentOrder(plan) {
         try {
             const formData = new FormData();
             formData.append('plan', plan);
 
-            const response = await fetch(`${this.API_URL}/upgrade`, {
+            const response = await fetch(`${this.API_URL}/payment/create-order`, {
                 method: 'POST',
-                headers: this.getAuthHeader(),
+                headers: {
+                    ...this.getAuthHeader()
+                },
                 body: formData
             });
 
+            if (!response.ok) {
+                throw new Error('Failed to create payment order');
+            }
+
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Payment order creation error:', error);
+            return { success: false, error: 'Failed to create payment order' };
+        }
+    }
+
+    // Verify payment and upgrade plan
+    async verifyPayment(orderId, paymentId, signature) {
+        try {
+            const formData = new FormData();
+            formData.append('razorpay_order_id', orderId);
+            formData.append('razorpay_payment_id', paymentId);
+            formData.append('razorpay_signature', signature);
+
+            const response = await fetch(`${this.API_URL}/payment/verify`, {
+                method: 'POST',
+                headers: {
+                    ...this.getAuthHeader()
+                },
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error('Payment verification failed');
+            }
+
             const data = await response.json();
             
-            if (data.success) {
-                this.user.plan = plan;
+            if (data.success && data.user) {
+                this.user = data.user;
                 localStorage.setItem('user', JSON.stringify(this.user));
             }
 
             return data;
         } catch (error) {
-            console.error('Upgrade error:', error);
-            return { success: false, error: 'Upgrade failed' };
+            console.error('Payment verification error:', error);
+            return { success: false, error: 'Payment verification failed' };
+        }
+    }
+
+    // Legacy upgrade plan (for backward compatibility)
+    async upgradePlan(plan) {
+        // Redirect to payment flow
+        return await this.initiatePayment(plan);
+    }
+
+    // Initiate Razorpay payment
+    async initiatePayment(plan) {
+        try {
+            // Create payment order
+            const orderData = await this.createPaymentOrder(plan);
+            
+            if (!orderData.success) {
+                return { success: false, error: orderData.error || 'Failed to create payment order' };
+            }
+
+            const planNames = {
+                'pro': 'Pro Plan',
+                'coach': 'Coach Plan'
+            };
+
+            const planPrices = {
+                'pro': '₹699',
+                'coach': '₹2,499'
+            };
+
+            // Razorpay checkout options
+            const options = {
+                key: orderData.key_id,
+                amount: orderData.amount,
+                currency: orderData.currency,
+                name: 'ArmWrestle AI',
+                description: `Subscription: ${planNames[plan] || plan}`,
+                order_id: orderData.order_id,
+                handler: async (response) => {
+                    // Payment successful, verify payment
+                    const verifyResult = await this.verifyPayment(
+                        response.razorpay_order_id,
+                        response.razorpay_payment_id,
+                        response.razorpay_signature
+                    );
+
+                    if (verifyResult.success) {
+                        showNotification('Payment successful! Plan upgraded.', 'success');
+                        if (typeof updateUIForAuthState === 'function') {
+                            updateUIForAuthState();
+                        }
+                        if (typeof loadStats === 'function') {
+                            await loadStats();
+                        }
+                    } else {
+                        showNotification(verifyResult.error || 'Payment verification failed', 'error');
+                    }
+                },
+                prefill: {
+                    name: this.user?.name || '',
+                    email: this.user?.email || '',
+                },
+                theme: {
+                    color: '#e74c3c'
+                },
+                modal: {
+                    ondismiss: () => {
+                        showNotification('Payment cancelled', 'warning');
+                    }
+                }
+            };
+
+            // Open Razorpay checkout
+            const razorpay = new Razorpay(options);
+            razorpay.open();
+
+            return { success: true, message: 'Payment window opened' };
+        } catch (error) {
+            console.error('Payment initiation error:', error);
+            return { success: false, error: 'Failed to initiate payment' };
         }
     }
 }
@@ -155,6 +315,8 @@ function showAuthModal(mode = 'login') {
     const loginForm = document.getElementById('loginForm');
     const registerForm = document.getElementById('registerForm');
     
+    if (!modal || !loginForm || !registerForm) return;
+    
     modal.classList.remove('hidden');
     
     if (mode === 'login') {
@@ -167,7 +329,18 @@ function showAuthModal(mode = 'login') {
 }
 
 function hideAuthModal() {
-    document.getElementById('authModal').classList.add('hidden');
+    const modal = document.getElementById('authModal');
+    if (modal) modal.classList.add('hidden');
+}
+
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) modal.classList.add('hidden');
+}
+
+function toggleUserDropdown() {
+    const dropdown = document.getElementById('userDropdown');
+    if (dropdown) dropdown.classList.toggle('hidden');
 }
 
 // Handle login
@@ -228,14 +401,16 @@ function updateUIForAuthState() {
     
     if (auth.isAuthenticated()) {
         const user = auth.getCurrentUser();
-        loginBtn.classList.add('hidden');
-        userMenu.classList.remove('hidden');
-        userName.textContent = user.name;
-        userPlan.textContent = user.plan.toUpperCase();
-        userPlan.className = `plan-badge plan-${user.plan}`;
+        if (user && loginBtn && userMenu && userName && userPlan) {
+            loginBtn.classList.add('hidden');
+            userMenu.classList.remove('hidden');
+            userName.textContent = user.name || 'User';
+            userPlan.textContent = (user.plan || 'free').toUpperCase();
+            userPlan.className = `plan-badge plan-${user.plan || 'free'}`;
+        }
     } else {
-        loginBtn.classList.remove('hidden');
-        userMenu.classList.add('hidden');
+        if (loginBtn) loginBtn.classList.remove('hidden');
+        if (userMenu) userMenu.classList.add('hidden');
     }
 }
 
@@ -320,7 +495,7 @@ function displayStats(stats) {
         </div>
         <div class="stat-card">
             <h3>Current Plan</h3>
-            <div class="stat-value">${stats.plan.toUpperCase()}</div>
+            <div class="stat-value">${(stats.plan || 'free').toUpperCase()}</div>
         </div>
     `;
     

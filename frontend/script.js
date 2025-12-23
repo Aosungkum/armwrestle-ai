@@ -1,3 +1,6 @@
+const API_URL = "https://armwrestle-ai-production.up.railway.app";
+
+
 // DOM Elements
 const uploadArea = document.getElementById('uploadArea');
 const videoInput = document.getElementById('videoInput');
@@ -69,25 +72,49 @@ function handleFileSelect(file) {
     
     uploadArea.classList.add('hidden');
     videoPreview.classList.remove('hidden');
+    
+    // Show person selection (will be hidden if only one person detected)
+    const personSelection = document.getElementById('personSelection');
+    if (personSelection) {
+        personSelection.classList.remove('hidden');
+    }
 }
 
 // Analyze Button Handler
 analyzeBtn.addEventListener('click', async () => {
     if (!selectedFile) return;
     
+    // Get selected person ID
+    const personSelection = document.getElementById('personSelection');
+    const selectedPerson = personSelection ? 
+        document.querySelector('input[name="person"]:checked')?.value : null;
+    const personId = selectedPerson ? parseInt(selectedPerson) : null;
+    
     // Hide preview, show loading
     videoPreview.classList.add('hidden');
+    if (personSelection) personSelection.classList.add('hidden');
     loadingState.classList.remove('hidden');
     
-    // Simulate analysis (replace with actual API call)
-    await simulateAnalysis();
-    
-    // Show results
+    const result = await analyzeVideo(selectedFile, personId);
+
     loadingState.classList.add('hidden');
-    resultsSection.classList.remove('hidden');
-    
-    // Display mock results
-    displayResults();
+
+    if (result && result.success) {
+        resultsSection.classList.remove('hidden');
+        displayAPIResults(result.data);
+        
+        // Show which person was analyzed if multiple people detected
+        if (result.data.people_detected && result.data.people_detected.length > 1) {
+            const analyzedPerson = result.data.analyzed_person;
+            if (analyzedPerson) {
+                showNotification(`Analyzed: ${analyzedPerson.label}`, 'info');
+            }
+        }
+    } else if (result && !result.success) {
+        alert(result.error || 'Analysis failed. Please try again.');
+    } else {
+        // Error already handled in analyzeVideo
+    }
 });
 
 // Simulate Analysis Process
@@ -214,31 +241,71 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
 });
 
 // API Call Function (for backend integration)
-async function analyzeVideo(videoFile) {
+async function analyzeVideo(videoFile, personId = null) {
     const formData = new FormData();
     formData.append('video', videoFile);
     
+    // Add person selection if specified
+    if (personId !== null) {
+        formData.append('person_id', personId.toString());
+    }
+    
     try {
-        const response = await fetch('http://localhost:8000/api/analyze', {
+        // Get auth token for authenticated requests
+        const headers = {};
+        const token = localStorage.getItem('auth_token');
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        const response = await fetch(`${API_URL}/api/analyze`, {
             method: 'POST',
+            headers: headers,
             body: formData
         });
         
         if (!response.ok) {
-            throw new Error('Analysis failed');
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || 'Analysis failed');
         }
         
         const data = await response.json();
+        
+        // Log API response for debugging
+        console.log("API Response:", {
+            success: data.success,
+            is_real_analysis: data.data?._is_real_analysis,
+            fallback_reason: data.data?._fallback_reason,
+            frames_analyzed: data.data?.frames_analyzed
+        });
+        
         return data;
     } catch (error) {
         console.error('Error analyzing video:', error);
-        alert('Failed to analyze video. Please try again.');
+        console.error('API URL used:', API_URL);
+        alert('Failed to analyze video. Check console for details. Make sure server is running on http://127.0.0.1:8000');
         return null;
     }
 }
 
 // Function to display real API results
 function displayAPIResults(data) {
+    // Show analysis type indicator
+    if (data._is_real_analysis) {
+        console.log("[SUCCESS] Real analysis results received");
+        console.log("Frames analyzed:", data.frames_analyzed);
+        console.log("Duration:", data.duration, "seconds");
+    } else if (data._fallback_reason) {
+        console.warn("[WARNING] Using mock analysis:", data._fallback_reason);
+        // Show notice to user if it's a real error
+        if (data._fallback_reason && !data._fallback_reason.includes("not available")) {
+            console.error("Analysis error:", data._fallback_reason);
+        }
+    } else {
+        console.warn("[WARNING] No analysis type indicator - may be mock data");
+        console.log("Response data:", data);
+    }
+    
     // Technique Results
     document.getElementById('techniqueResults').innerHTML = `
         <div class="technique-badge">Primary: ${data.technique.primary}</div>
@@ -274,4 +341,68 @@ function displayAPIResults(data) {
             ${data.recommendations.map(rec => `<li>${rec}</li>`).join('')}
         </ul>
     `;
+}
+
+// Display history list
+async function fetchHistory() {
+    const token = localStorage.getItem("auth_token");
+
+    if (!token) {
+        alert("Please login first");
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_URL}/api/history`, {
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            console.error('Failed to fetch history:', response.status);
+            return [];
+        }
+
+        const data = await response.json();
+        return data.analyses || [];
+    } catch (error) {
+        console.error('Error fetching history:', error);
+        return [];
+    }
+}
+// History Button Click Handler
+function showHistoryList(analyses) {
+    const resultsSection = document.getElementById("resultsSection");
+    resultsSection.classList.remove("hidden");
+
+    resultsSection.innerHTML = `
+        <h2>📜 Your Analysis History</h2>
+        <div id="historyList"></div>
+    `;
+
+    const list = document.getElementById("historyList");
+
+    analyses.forEach(item => {
+        const div = document.createElement("div");
+        div.className = "history-item";
+        div.innerHTML = `
+            <strong>${item.video_name}</strong><br/>
+            <small>${new Date(item.created_at).toLocaleString()}</small>
+        `;
+
+        div.onclick = () => {
+            displayAPIResults(item.result);
+        };
+
+        list.appendChild(div);
+    });
+}
+// History button event listener - only attach if element exists
+const historyBtn = document.getElementById("historyBtn");
+if (historyBtn) {
+    historyBtn.addEventListener("click", async () => {
+        const analyses = await fetchHistory();
+        showHistoryList(analyses);
+    });
 }
