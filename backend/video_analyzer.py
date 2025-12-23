@@ -191,6 +191,18 @@ class ArmWrestlingAnalyzer:
         # Calculate elbow angle
         elbow_angle = self.calculate_angle(shoulder, elbow, wrist)
         
+        # Add person-specific risk bias based on body position
+        body_center_x = (landmarks[self.RIGHT_SHOULDER][0] + landmarks[self.LEFT_SHOULDER][0]) / 2
+        is_left_person = body_center_x < 0.5
+        
+        # Adjust angle thresholds based on person position for different risk assessment
+        if is_left_person:
+            # Left person: More sensitive to elbow risks
+            elbow_risk_threshold = 35  # Lower threshold = more risks detected
+        else:
+            # Right person: More sensitive to shoulder risks
+            elbow_risk_threshold = 40  # Higher threshold = different risks
+        
         # Elbow Ligament Stress (person-specific thresholds)
         if elbow_angle > elbow_risk_threshold:
             risk_level = "high" if elbow_angle > 45 else "medium"
